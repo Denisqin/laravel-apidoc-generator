@@ -1,11 +1,9 @@
 <?php
-
 namespace Mpociot\ApiDoc\Tools\ResponseStrategies;
-
 use Illuminate\Routing\Route;
 use Illuminate\Http\JsonResponse;
 use Mpociot\Reflection\DocBlock\Tag;
-
+use App\Error;
 /**
  * Get a response from the docblock ( @response ).
  */
@@ -22,7 +20,6 @@ class ResponseTagStrategy
     {
         return $this->getDocBlockResponses($tags);
     }
-
     /**
      * Get the response from the docblock if available.
      *
@@ -37,17 +34,18 @@ class ResponseTagStrategy
                 return $tag instanceof Tag && strtolower($tag->getName()) === 'response';
             })
         );
-
         if (empty($responseTags)) {
             return;
         }
-
         return array_map(function (Tag $responseTag) {
-            preg_match('/^(\d{3})?\s?([\s\S]*)$/', $responseTag->getContent(), $result);
-
-            $status = $result[1] ?: 200;
-            $content = $result[2] ?: '{}';
-
+            preg_match('/^(sys_([\d]{2}))?\s?(\d{3})?\s?([\s\S]*)$/', $responseTag->getContent(), $result);
+            if ($result[1]) {
+                $error = Error::where(['code' => $result[1]])->first();
+                $content = $error ?: '{}';
+            } else {
+                $content = $result[3] ?: '{}';
+            }
+            $status = $result[2] ?: 200;
             return new JsonResponse(json_decode($content, true), (int) $status);
         }, $responseTags);
     }
