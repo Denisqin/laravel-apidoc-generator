@@ -38,7 +38,7 @@ class ResponseTagStrategy
             return;
         }
         return array_map(function (Tag $responseTag) {
-            preg_match('/^(sys_([\d]{2}))?\s?(\d{3})?\s?([\s\S]*)$/', $responseTag->getContent(), $result);
+            preg_match('/^(sys_[\d]{2})?\s?(\d{3})?\s?([\s\S]*)$/', $responseTag->getContent(), $result);
             if ($result[1]) {
                 $error = Error::where(['code' => $result[1]])->first();
                 $content = $error ?: '{}';
